@@ -1,44 +1,55 @@
 class Pawn {
-    constructor(color) {
-      this.color = color; // 'white' ou 'black'
+    constructor(color, position) {
+      this.color = color; //'white' or 'black'
+      this.position = position; //{ row: Number, col: Number }
       this.hasMoved = false;
-      this.type = 'pawn';
     }
   
-    isValidMove(from, to, board) {
-      const [fromRow, fromCol] = from;
-      const [toRow, toCol] = to;
+    getValidMoves(board) {
+      const moves = [];
+      const { row, col } = this.position;
       const direction = this.color === 'white' ? -1 : 1;
+      const startRow = this.color === 'white' ? 6 : 1;
   
-      const target = board[toRow][toCol];
+      //Move one square forward
+      if (this.isEmpty(board, row + direction, col)) {
+        moves.push({ row: row + direction, col });
   
-      // Movimento simples pra frente
-      if (fromCol === toCol && toRow === fromRow + direction && target === null) {
-        return true;
+        //Move two squares forward if it's the first move
+        if (!this.hasMoved && this.isEmpty(board, row + 2 * direction, col)) {
+          moves.push({ row: row + 2 * direction, col });
+        }
       }
   
-      // Primeiro movimento: 2 casas
-      if (
-        fromCol === toCol &&
-        !this.hasMoved &&
-        toRow === fromRow + 2 * direction &&
-        board[fromRow + direction][fromCol] === null &&
-        target === null
-      ) {
-        return true;
+      //Capture diagonally
+      for (let offset of [-1, 1]) {
+        const targetCol = col + offset;
+        const targetRow = row + direction;
+  
+        if (
+          this.inBounds(targetRow, targetCol) &&
+          this.isEnemy(board, targetRow, targetCol)
+        ) {
+          moves.push({ row: targetRow, col: targetCol });
+        }
       }
   
-      // Captura diagonal
-      if (
-        Math.abs(toCol - fromCol) === 1 &&
-        toRow === fromRow + direction &&
-        target !== null &&
-        target.color !== this.color
-      ) {
-        return true;
-      }
+      return moves;
+    }
   
-      return false;
+    isEmpty(board, row, col) {
+      return this.inBounds(row, col) && board[row][col] === null;
+    }
+  
+    isEnemy(board, row, col) {
+      const piece = board[row][col];
+      return piece && piece.color !== this.color;
+    }
+  
+    inBounds(row, col) {
+      return row >= 0 && row < 8 && col >= 0 && col < 8;
     }
   }
+  
+  module.exports = Pawn;
   
